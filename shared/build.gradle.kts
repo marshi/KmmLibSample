@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    `maven-publish`
 }
 
 kotlin {
@@ -36,6 +37,9 @@ kotlin {
         val iosMain by getting
         val iosTest by getting
     }
+    targets {
+        targetFromPreset(presets.getByName("android"), "android")
+    }
 }
 
 android {
@@ -52,7 +56,8 @@ val packForXcode by tasks.creating(Sync::class) {
     val mode = System.getenv("CONFIGURATION") ?: "DEBUG"
     val sdkName = System.getenv("SDK_NAME") ?: "iphonesimulator"
     val targetName = "ios" + if (sdkName.startsWith("iphoneos")) "Arm64" else "X64"
-    val framework = kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
+    val framework =
+        kotlin.targets.getByName<KotlinNativeTarget>(targetName).binaries.getFramework(mode)
     inputs.property("mode", mode)
     dependsOn(framework.linkTask)
     val targetDir = File(buildDir, "xcode-frameworks")
@@ -61,3 +66,26 @@ val packForXcode by tasks.creating(Sync::class) {
 }
 
 tasks.getByName("build").dependsOn(packForXcode)
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/marshi/KmmLibSample")
+            credentials {
+//                username = System.getenv("USERNAME")
+//                password = System.getenv("TOKEN")
+                username = "marshi"
+                password = "PERSONAL_ACCESS_TOKEN"
+            }
+        }
+    }
+    publications {
+        register<MavenPublication>("gpr") {
+            groupId = "dev.marshi.kmmsample"
+            artifactId = "shared"
+            version = "0.0.1-SNAPSHOT"
+            artifact("$buildDir/outputs/aar/shared-release.aar")
+        }
+    }
+}
