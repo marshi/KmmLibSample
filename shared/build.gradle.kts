@@ -67,6 +67,10 @@ val packForXcode by tasks.creating(Sync::class) {
 
 tasks.getByName("build").dependsOn(packForXcode)
 
+// iosのバージョニングに使われる
+group = "dev.marshi.kmmsample"
+version = "0.0.1-SNAPSHOT"
+
 publishing {
     repositories {
         maven {
